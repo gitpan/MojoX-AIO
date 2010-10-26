@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               MojoX-AIO
-version:            0.01
+version:            0.02
 abstract:           ~
 author:  []
 license:            unknown
@@ -11,8 +11,8 @@ build_requires:
     ExtUtils::MakeMaker:  0
 requires:
     Carp:         ~
-    IO::AIO:      ~
-    Mojolicious:  ~
+    IO::AIO:      2
+    Mojolicious:  0.999931
 no_index:
     directory:
         - t
