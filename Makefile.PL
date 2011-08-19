@@ -8,7 +8,7 @@ WriteMakefile(
     'PREREQ_PM'        => {
         'Carp'        => undef,
         'IO::AIO'     => 2,
-        'Mojolicious' => 0.999931,
+        'Mojolicious' => 1.65,
     },
     'dist'         => {
         'SUFFIX'       => ".gz",

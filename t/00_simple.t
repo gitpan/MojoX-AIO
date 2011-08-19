@@ -1,22 +1,24 @@
 #!/usr/bin/perl
 
 # vim: set syntax=perl
-use warnings;
-use strict;
 
 use Test::More tests => 6;
 
 BEGIN {
-    use_ok 'Mojolicious';
+    use_ok 'Mojo';
     use_ok 'IO::AIO';
     use_ok 'MojoX::AIO';
 }
 
 use Fcntl qw( O_RDONLY );
 use FindBin;
+use Mojo::IOLoop;
+use bytes;
 
 use strict;
 use warnings;
+
+my $loop = Mojo::IOLoop->singleton;
 
 sub _start {
     my $file = $FindBin::Bin.'/../Makefile.PL';
@@ -30,7 +32,7 @@ sub open_done {
 
     unless ( defined $fh ) {
         Test::More::fail("aio open failed on $file: $!");
-        return;
+        return $loop->stop;
     }
 
     Test::More::pass("opened $file, going to read");
@@ -44,16 +46,22 @@ sub read_done {
 
     unless( $bytes > 0 ) {
         Test::More::fail("aio read failed: $!");
-        return;
+        return $loop->stop;
+    }
+
+    unless ( length $buffer == $bytes ) {
+        Test::More::fail("buffer doesn't match byte count");
+        return $loop->stop;
     }
 
     Test::More::pass("read file: $bytes bytes");
 
-    Mojo::IOLoop->singleton->stop;
+    $loop->stop;
 }
 
-Mojo::IOLoop->singleton->timer( 1 => \&_start );
+$loop->timer( 1 => \&_start );
+$loop->timer( 10 => sub { Test::More::fail("test timed out after 10s"); $loop->stop; });
 
-Mojo::IOLoop->singleton->start;
+$loop->start;
 
 1;
