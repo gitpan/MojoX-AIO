@@ -11,9 +11,9 @@ use Carp qw( croak );
 
 has 'ioloop' => sub { Mojo::IOLoop->singleton };
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
-use vars qw( $singleton );
+our $singleton;
 
 sub import {
     my ( $class, $args ) = @_;
@@ -43,18 +43,13 @@ sub new {
 
     my $self = $singleton = bless({ @_ }, ref $class || $class );
 
-    my $fd = poll_fileno();
-    open( my $fh, "<&=$fd" ) or croak "Can't open IO::AIO poll_fileno - $fd : $!";
+    open(my $fh, '<&=', poll_fileno)
+        or croak "Can't open IO::AIO poll_fileno: $!";
 
-    my $watcher = $self->ioloop->iowatcher;
-    if ( $watcher->can( 'watch' ) ) {
-        $watcher->watch( $fh => \&poll_cb );
-    } elsif ( $watcher->can( 'add' ) ) {
-        $watcher->add(
-            $fh,
-            on_readable => \&poll_cb
-        );
-    }
+    my $stream = Mojo::IOLoop::Stream->new($fh);
+    $stream->on(read => \&poll_cb);
+
+    $self->ioloop->stream($stream);
 
     return $self;
 }
@@ -106,7 +101,11 @@ L<IO::AIO>, L<Mojolicious> (L<http://mojolicio.us/>)
 
 =head1 AUTHOR
 
-David Davis <xantus@cpan.org>, L<http://xant.us/>
+David Davis <xantus@cpan.org>, L<http://xantus.org/>
+
+=head1 CONTRIBUTORS
+
+Olivier Duclos
 
 =head1 LICENSE
 
@@ -115,4 +114,3 @@ Artistic License
 =head1 COPYRIGHT
 
 Copyright (c) 2010-2012 David Davis, All rights reserved
-
